@@ -38,6 +38,7 @@ def get_all_products():
         
         # Execute query
         products = query.all()
+        print("------------ products: ", products)
         
         return jsonify({
             'products': [product.to_dict() for product in products],

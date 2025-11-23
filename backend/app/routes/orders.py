@@ -18,6 +18,7 @@ def create_order():
     - Awards reward points
     """
     try:
+        print("create_order")
         customer_id = get_jwt_identity()
         data = request.get_json()
         
