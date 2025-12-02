@@ -10,7 +10,7 @@ coverage/
 __pycache__/
 *.pyc
 .env/
-venv/
+venv_*/
 
 # Frontend
 .DS_Store

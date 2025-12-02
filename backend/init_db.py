@@ -37,7 +37,7 @@ def init_database():
                 description='Rich chocolate coffee blend',
                 price=550,
                 stock_quantity=100,
-                image_url='images/mocha.jpg'
+                image_url='/images/mocha.jpg'
             ),
             Product(
                 name='Espresso',
@@ -45,7 +45,7 @@ def init_database():
                 description='Strong and bold coffee shot',
                 price=700,
                 stock_quantity=100,
-                image_url='images/espresso.jpg'
+                image_url='/images/espresso.jpg'
             ),
             Product(
                 name='Cappuccino',
@@ -53,7 +53,7 @@ def init_database():
                 description='Espresso with steamed milk and foam',
                 price=600,
                 stock_quantity=100,
-                image_url='images/cappuccino.jpg'
+                image_url='/images/cappuccino.jpg'
             ),
             
             # Cold Drinks
@@ -63,7 +63,7 @@ def init_database():
                 description='Chilled espresso with caramel and milk',
                 price=650,
                 stock_quantity=100,
-                image_url='images/caramelicedlatte.jpg'
+                image_url='/images/caramelicedlatte.jpg'
             ),
             
             # Frappes
@@ -73,7 +73,7 @@ def init_database():
                 description='Blended coffee with vanilla and cream',
                 price=700,
                 stock_quantity=100,
-                image_url='images/vanillafrappe.jpg'
+                image_url='/images/vanillafrappe.jpg'
             ),
             Product(
                 name='Salted Caramel Frappe',
@@ -81,7 +81,7 @@ def init_database():
                 description='Blended coffee with salted caramel and cream',
                 price=750,
                 stock_quantity=100,
-                image_url='images/saltedcaramelfrappe.jpg'
+                image_url='/images/saltedcaramelfrappe.jpg'
             ),
             
             # Shakes
@@ -91,7 +91,7 @@ def init_database():
                 description='Creamy shake with rich chocolate flavor',
                 price=500,
                 stock_quantity=100,
-                image_url='images/chocolateshake.jpg'
+                image_url='/images/chocolateshake.jpg'
             ),
             
             # Matcha
@@ -101,7 +101,7 @@ def init_database():
                 description='Delicious and soulful Matcha',
                 price=500,
                 stock_quantity=100,
-                image_url='images/matcha.jpg'
+                image_url='/images/matcha.jpg'
             ),
         ]
         db.session.add_all(products)

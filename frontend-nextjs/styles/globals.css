@@ -3,14 +3,13 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: "Poppins", sans-serif;
 }
 
 body {
   background-color: #f9f6f2;
   color: #3c2a21;
-  padding-top: 80px;
   overflow-x: hidden;
+  font-family: var(--font-poppins), 'Poppins', sans-serif;
 }
 
 /* Subtle coffee background texture */
@@ -18,7 +17,7 @@ body::before {
   content: "";
   position: fixed;
   inset: 0;
-  background-image: url('images/coffeebg.jpg');
+  background-image: url('/images/coffeebg.jpg');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
@@ -37,17 +36,8 @@ body::before {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-.nav-container {
-  max-width: 1200px;
-  margin: auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 24px;
-}
-
 .navbar-brand {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-playfair), 'Playfair Display', serif;
   font-size: 1.6rem;
   font-weight: 700;
   color: #fff !important;
@@ -58,35 +48,6 @@ body::before {
   color: #d1a679;
 }
 
-.logo {
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: #fff;
-  text-decoration: none;
-  letter-spacing: 1px;
-  transition: color 0.3s ease;
-}
-
-.logo span {
-  color: #d1a679;
-}
-
-.logo:hover {
-  color: #d1a679;
-}
-
-.nav-links {
-  list-style: none;
-  display: flex;
-  gap: 25px;
-  margin: 0;
-}
-
-.nav-links li {
-  display: inline-block;
-}
-
-.nav-links a,
 .nav-link {
   color: #f5e8da;
   text-decoration: none;
@@ -94,19 +55,32 @@ body::before {
   transition: all 0.3s ease;
 }
 
-.nav-links a:hover,
-.nav-links a.active,
-.nav-link:hover {
+.nav-link:hover,
+.nav-link.active {
   color: #d1a679 !important;
   border-bottom: 2px solid #d1a679;
   padding-bottom: 3px;
+}
+
+.dropdown-menu {
+  background-color: rgba(28, 20, 13, 0.95);
+  border: 1px solid #d1a679;
+}
+
+.dropdown-item {
+  color: #f5e8da;
+}
+
+.dropdown-item:hover {
+  background-color: rgba(209, 166, 121, 0.2);
+  color: #d1a679;
 }
 
 /* ===== Hero Section ===== */
 .hero-section {
   position: relative;
   height: 90vh;
-  background-image: url("images/hero-bg.jpg");
+  background-image: url("/images/hero-bg.jpg");
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
@@ -175,7 +149,7 @@ header p {
 }
 
 .menu-title {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-playfair), 'Playfair Display', serif;
   font-size: 2.5rem;
   color: #5b220c;
   letter-spacing: 1px;
@@ -269,7 +243,7 @@ header p {
 }
 
 .cart-title {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-playfair), 'Playfair Display', serif;
   font-size: 2.8rem;
   letter-spacing: 1px;
   font-weight: 700;
@@ -351,6 +325,33 @@ header p {
   border-radius: 10px;
   padding: 12px 30px;
   font-weight: 600;
+}
+
+/* ===== Review Box ===== */
+.review-box {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  padding: 40px 35px;
+  border-radius: 20px;
+  max-width: 600px;
+  width: 100%;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  margin: 0 auto;
+}
+
+.review-box h3 {
+  color: #4b2c20;
+  margin-bottom: 10px;
+}
+
+.review-box p {
+  color: #5c4033;
+  margin-bottom: 20px;
+}
+
+.review-box hr {
+  margin: 20px 0;
+  border-color: #d1a679;
 }
 
 /* ===== Contact Section ===== */
