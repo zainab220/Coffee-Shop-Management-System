@@ -32,8 +32,11 @@ backend/
 │       ├── products.py   # /api/products/*
 │       ├── orders.py     # /api/orders/*
 │       ├── reviews.py    # /api/reviews/*
-│       └── rewards.py    # /api/rewards/*
+│       ├── rewards.py    # /api/rewards/*
+│       └── admin.py      # /api/admin/*
 ├── run.py                # Start server
+├── init_db.py           # Database initialization
+├── setup_database.py     # Database setup
 └── requirements.txt      # Python packages
 ```
 
@@ -43,14 +46,19 @@ frontend-nextjs/
 ├── app/                  # Pages (routes)
 │   ├── page.tsx         # Homepage (/)
 │   ├── login/           # /login
+│   ├── signup/           # /signup
 │   ├── menu/            # /menu
 │   ├── cart/            # /cart
-│   └── checkout/        # /checkout
+│   ├── checkout/        # /checkout
+│   ├── reviews/         # /reviews
+│   ├── rewards/         # /rewards
+│   └── contact/         # /contact
 ├── components/          # Reusable UI components
 ├── context/             # Global state (Auth, Cart)
 ├── lib/
 │   └── api.ts           # Backend API client
-└── styles/              # CSS files
+├── styles/              # CSS files
+└── public/              # Static assets (images)
 ```
 
 ---
@@ -211,28 +219,69 @@ return <button disabled={loading}>{loading ? 'Loading...' : 'Submit'}</button>;
 ## 📊 Database Models
 
 ### Customer
-- `customer_id` (Primary Key)
-- `name`, `email`, `password`
-- `phone`, `address`
-- `reward_points`
+- `customer_id` (Primary Key, Auto Increment)
+- `name`, `email`, `password` (Required)
+- `phone`, `address` (Optional)
+- `reward_points` (Default: 0)
+- Relationships: orders, reviews, reward_transactions
+
+### Category
+- `category_id` (Primary Key, Auto Increment)
+- `category_name` (Unique, Required)
+- Relationship: products
 
 ### Product
-- `product_id` (Primary Key)
-- `name`, `description`, `price`
-- `stock_quantity`
-- `category_id` (Foreign Key)
+- `product_id` (Primary Key, Auto Increment)
+- `name`, `description`, `price` (Required)
+- `stock_quantity` (Default: 0)
+- `image_url`
+- `category_id` (Foreign Key → Category)
+- Relationships: order_details, reviews
 
 ### Orders
-- `order_id` (Primary Key)
-- `customer_id` (Foreign Key)
-- `total_amount`, `status`
-- `order_date`
+- `order_id` (Primary Key, Auto Increment)
+- `customer_id` (Foreign Key → Customer, Required)
+- `total_amount` (Required)
+- `status` (Enum: 'Pending', 'Completed', 'Cancelled')
+- `order_date` (Default: current timestamp)
+- Relationships: order_details, payment
 
 ### OrderDetails
-- `order_detail_id` (Primary Key)
-- `order_id` (Foreign Key)
-- `product_id` (Foreign Key)
-- `quantity`, `subtotal`
+- `order_detail_id` (Primary Key, Auto Increment)
+- `order_id` (Foreign Key → Orders, Required)
+- `product_id` (Foreign Key → Product, Required)
+- `quantity` (Required)
+- `subtotal` (Required)
+
+### Payment
+- `payment_id` (Primary Key, Auto Increment)
+- `order_id` (Foreign Key → Orders, Unique, Required)
+- `payment_method` (Enum: 'CreditCard', 'Cash', 'Online')
+- `amount` (Required)
+- `status` (Enum: 'Paid', 'Pending', 'Refunded')
+- `payment_date` (Default: current timestamp)
+
+### Review
+- `review_id` (Primary Key, Auto Increment)
+- `customer_id` (Foreign Key → Customer, Required)
+- `product_id` (Foreign Key → Product, Required)
+- `rating` (Required, 1-5)
+- `comment` (Optional)
+- `review_date` (Default: current timestamp)
+
+### RewardTransaction
+- `reward_id` (Primary Key, Auto Increment)
+- `customer_id` (Foreign Key → Customer, Required)
+- `points_earned` (Default: 0)
+- `points_redeemed` (Default: 0)
+- `transaction_date` (Default: current timestamp)
+- `description` (Optional)
+
+### Admin
+- `admin_id` (Primary Key, Auto Increment)
+- `username` (Unique, Required)
+- `password` (Required)
+- `role` (Enum: 'Manager', 'Staff')
 
 ---
 
@@ -240,29 +289,62 @@ return <button disabled={loading}>{loading ? 'Loading...' : 'Submit'}</button>;
 
 ### Authentication (`/api/auth`)
 - `POST /register` - Register new user
+  - Body: `{ name, email, password, phone?, address? }`
 - `POST /login` - Login user
+  - Body: `{ email, password }`
+  - Returns: `{ access_token, customer }`
 - `GET /profile` - Get user profile (requires auth)
 - `PUT /profile` - Update profile (requires auth)
+  - Body: `{ name?, phone?, address? }`
+- `POST /change-password` - Change password (requires auth)
+  - Body: `{ old_password, new_password }`
 
 ### Products (`/api/products`)
-- `GET /` - Get all products (with filters)
-- `GET /:id` - Get single product
+- `GET /` - Get all products (with optional filters)
+  - Query params: `category_id?, search?, min_price?, max_price?`
+- `GET /:id` - Get single product by ID
 - `GET /categories` - Get all categories
+- `GET /category/:id` - Get products by category
+- `GET /featured` - Get featured products (top 8)
 
 ### Orders (`/api/orders`)
 - `POST /` - Create order (requires auth)
+  - Body: `{ items: [{product_id, quantity, price}], payment_method, delivery_fee?, points_to_redeem? }`
+  - Returns: `{ order, points_earned, points_redeemed, discount_amount }`
 - `GET /` - Get user's orders (requires auth)
 - `GET /:id` - Get order details (requires auth)
-- `PUT /:id/cancel` - Cancel order (requires auth)
+- `PUT /:id/cancel` - Cancel order (requires auth, only if status is 'Pending')
 
 ### Reviews (`/api/reviews`)
+- `GET /` - Get all reviews
 - `POST /` - Create review (requires auth)
-- `GET /product/:id` - Get reviews for product
+  - Body: `{ product_id, rating (1-5), comment? }`
+- `GET /product/:id` - Get reviews for specific product
+  - Returns: `{ reviews, count, average_rating }`
 - `GET /customer` - Get user's reviews (requires auth)
+- `PUT /:id` - Update review (requires auth, only own reviews)
+  - Body: `{ rating?, comment? }`
+- `DELETE /:id` - Delete review (requires auth, only own reviews)
 
 ### Rewards (`/api/rewards`)
-- `GET /` - Get user's rewards (requires auth)
-- `POST /redeem` - Redeem points (requires auth)
+- `GET /` - Get user's rewards and transaction history (requires auth)
+  - Returns: `{ reward_points, transactions, transactions_count }`
+- `POST /redeem` - Redeem points for discount (requires auth)
+  - Body: `{ points }`
+  - Returns: `{ points_redeemed, discount_amount, remaining_points }`
+
+### Admin (`/api/admin`)
+- `POST /login` - Admin login
+- `POST /products` - Create product (requires admin auth)
+- `PUT /products/:id` - Update product (requires admin auth)
+- `DELETE /products/:id` - Delete product (requires admin auth)
+- `POST /categories` - Create category (requires admin auth)
+- `GET /orders` - Get all orders (requires admin auth)
+- `PUT /orders/:id/status` - Update order status (requires admin auth)
+- `GET /reports/sales` - Get sales reports (requires admin auth)
+- `GET /customers` - Get all customers (requires admin auth)
+- `GET /reviews` - Get all reviews (requires admin auth)
+- `DELETE /reviews/:id` - Delete any review (requires admin auth)
 
 ---
 

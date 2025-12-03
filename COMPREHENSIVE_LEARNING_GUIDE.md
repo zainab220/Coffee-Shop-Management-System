@@ -155,10 +155,18 @@ Models represent database tables. Each class = one table.
 **Example: Customer Model**
 ```python
 class Customer(db.Model):
-    customer_id = db.Column(db.Integer, primary_key=True)
+    customer_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(100), unique=True)
-    password = db.Column(db.String(255))
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(255), nullable=False)
+    phone = db.Column(db.String(20))
+    address = db.Column(db.String(255))
+    reward_points = db.Column(db.Integer, default=0)
+    
+    # Relationships
+    orders = db.relationship('Orders', backref='customer')
+    reviews = db.relationship('Review', backref='customer')
+    reward_transactions = db.relationship('RewardTransaction', backref='customer')
 ```
 
 **Key Concepts:**
@@ -796,11 +804,13 @@ backend/
 │       ├── auth.py          # Authentication endpoints
 │       ├── products.py      # Product endpoints
 │       ├── orders.py        # Order endpoints
-│       ├── reviews.py      # Review endpoints
+│       ├── reviews.py       # Review endpoints
 │       ├── rewards.py       # Reward endpoints
-│       └── admin.py        # Admin endpoints
+│       └── admin.py         # Admin endpoints
 ├── run.py                   # Entry point
 ├── requirements.txt         # Python dependencies
+├── init_db.py              # Database initialization
+├── setup_database.py        # Database setup script
 └── .env                     # Environment variables
 ```
 
@@ -831,25 +841,35 @@ backend/
 frontend-nextjs/
 ├── app/
 │   ├── layout.tsx           # Root layout (wraps all pages)
-│   ├── page.tsx             # Homepage
+│   ├── page.tsx            # Homepage
 │   ├── login/
-│   │   └── page.tsx         # Login page
+│   │   └── page.tsx        # Login page
+│   ├── signup/
+│   │   └── page.tsx        # Signup/Registration page
 │   ├── menu/
-│   │   └── page.tsx         # Menu page
+│   │   └── page.tsx        # Menu page
 │   ├── cart/
-│   │   └── page.tsx         # Cart page
-│   └── checkout/
-│       └── page.tsx         # Checkout page
+│   │   └── page.tsx        # Cart page
+│   ├── checkout/
+│   │   └── page.tsx        # Checkout page
+│   ├── reviews/
+│   │   └── page.tsx        # Reviews page
+│   ├── rewards/
+│   │   └── page.tsx        # Rewards page
+│   └── contact/
+│       └── page.tsx        # Contact page
 ├── components/
-│   ├── Navbar.tsx           # Navigation bar
-│   └── Footer.tsx           # Footer
+│   ├── Navbar.tsx          # Navigation bar
+│   └── Footer.tsx         # Footer
 ├── context/
-│   ├── AuthContext.tsx      # Authentication state
-│   └── CartContext.tsx      # Shopping cart state
+│   ├── AuthContext.tsx     # Authentication state
+│   └── CartContext.tsx     # Shopping cart state
 ├── lib/
-│   └── api.ts               # API client
-└── styles/
-    └── globals.css          # Global styles
+│   └── api.ts              # API client
+├── styles/
+│   └── globals.css         # Global styles
+└── public/
+    └── images/             # Static images
 ```
 
 **File Responsibilities:**
@@ -933,13 +953,21 @@ frontend-nextjs/
 1. **User Fills Form** (`signup/page.tsx`):
    ```tsx
    <input name="email" value={email} onChange={handleChange} />
+   <input name="phone" value={phone} onChange={handleChange} />
+   <input name="address" value={address} onChange={handleChange} />
    ```
 
 2. **Form Submission**:
    ```tsx
    const handleSubmit = async (e) => {
      e.preventDefault();
-     await authAPI.register({ name, email, password });
+     await authAPI.register({ 
+       name: `${firstname} ${lastname}`,
+       email, 
+       password,
+       phone,
+       address
+     });
    };
    ```
 
@@ -953,7 +981,7 @@ frontend-nextjs/
 
 4. **Update Context**:
    ```tsx
-   await authContext.register({ name, email, password });
+   await authContext.register({ name, email, password, phone, address });
    // Automatically logs in after registration
    ```
 
@@ -1076,33 +1104,62 @@ frontend-nextjs/
        product.stock_quantity -= item['quantity']
    ```
 
-6. **Backend Awards Points**:
+6. **Backend Handles Points Redemption** (if applicable):
    ```python
-   points_earned = int(total_amount / 100)
-   customer.reward_points += points_earned
+   points_to_redeem = int(data.get('points_to_redeem', 0))
+   if points_to_redeem > 0:
+       discount_amount = Decimal(str(points_to_redeem))
+       total_amount -= discount_amount
+       customer.reward_points -= points_to_redeem
+       # Record redemption transaction
+       redemption_transaction = RewardTransaction(
+           customer_id=customer_id,
+           points_redeemed=points_to_redeem,
+           description=f'Redeemed {points_to_redeem} points for discount'
+       )
+       db.session.add(redemption_transaction)
    ```
 
-7. **Backend Commits**:
+7. **Backend Creates Payment Record**:
+   ```python
+   payment = Payment(
+       order_id=new_order.order_id,
+       payment_method=data['payment_method'],
+       amount=total_amount,
+       status='Pending' if data['payment_method'] == 'Cash' else 'Paid'
+   )
+   db.session.add(payment)
+   ```
+
+8. **Backend Commits**:
    ```python
    db.session.commit()  # Save everything
    ```
 
-8. **Backend Returns Response**:
+9. **Backend Returns Response**:
    ```python
    return jsonify({
-       'message': 'Order placed',
+       'message': 'Order placed successfully',
        'order': new_order.to_dict(),
-       'points_earned': points_earned
+       'points_earned': points_earned,
+       'points_redeemed': points_redeemed,
+       'discount_amount': float(discount_amount)
    }), 201
    ```
 
-9. **Frontend Receives Response**:
-   ```tsx
-   const response = await ordersAPI.create(orderData);
-   // response = { message: '...', order: {...}, points_earned: 5 }
-   ```
+10. **Frontend Receives Response**:
+    ```tsx
+    const response = await ordersAPI.create(orderData);
+    // response = { 
+    //   message: '...', 
+    //   order: {...}, 
+    //   points_earned: 5,
+    //   points_redeemed: 0,
+    //   discount_amount: 0
+    // }
+    ```
 
-10. **Frontend Updates UI**:
+12. **Frontend Updates UI**:
     ```tsx
     clearCart();  // Clear cart
     alert(`Order placed! Points earned: ${response.points_earned}`);

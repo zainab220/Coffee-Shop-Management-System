@@ -17,6 +17,11 @@
 │  │  │ - Menu   │  │ - Footer │  │ - Cart   │               │  │
 │  │  │ - Cart   │  │          │  │          │               │  │
 │  │  │ - Login  │  │          │  │          │               │  │
+│  │  │ - Signup │  │          │  │          │               │  │
+│  │  │ - Checkout│ │          │  │          │               │  │
+│  │  │ - Reviews│  │          │  │          │               │  │
+│  │  │ - Rewards│  │          │  │          │               │  │
+│  │  │ - Contact│  │          │  │          │               │  │
 │  │  └──────────┘  └──────────┘  └──────────┘               │  │
 │  │       │              │              │                     │  │
 │  │       └──────────────┴──────────────┘                     │  │
@@ -44,6 +49,9 @@
 │  │  │ - Auth   │  │          │  │          │               │   │
 │  │  │ - Orders │  │          │  │          │               │   │
 │  │  │ - Products│ │          │  │          │               │   │
+│  │  │ - Reviews│  │          │  │          │               │   │
+│  │  │ - Rewards│  │          │  │          │               │   │
+│  │  │ - Admin  │  │          │  │          │               │   │
 │  │  └─────┬────┘  └──────────┘  └──────────┘               │   │
 │  │        │                                                    │   │
 │  │        └──────────────────┐                                │   │
@@ -67,6 +75,17 @@
 │  │ - id     │  │ - id     │  │ - id     │  │ - id     │         │
 │  │ - name   │  │ - name   │  │ - total  │  │ - rating │         │
 │  │ - email  │  │ - price  │  │ - status │  │ - comment│         │
+│  │ - phone  │  │ - stock  │  │ - date   │  │ - date   │         │
+│  │ - points │  │ - image  │  │          │  │          │         │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘         │
+│                                                                      │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐         │
+│  │ Category │  │ Payment  │  │OrderDetail│ │RewardTrans│        │
+│  │          │  │          │  │          │  │          │         │
+│  │ - id     │  │ - id     │  │ - id     │  │ - id     │         │
+│  │ - name   │  │ - method │  │ - qty    │  │ - earned │         │
+│  │          │  │ - amount │  │ - subtotal│ │ - redeemed│        │
+│  │          │  │ - status │  │          │  │ - date   │         │
 │  └──────────┘  └──────────┘  └──────────┘  └──────────┘         │
 │                                                                      │
 └──────────────────────────────────────────────────────────────────────┘
@@ -340,10 +359,12 @@
 │  name        │      │
 │  email       │      │
 │  password    │      │
-│  points      │      │
+│  phone       │      │
+│  address     │      │
+│  reward_points│     │
 └──────────────┘      │
        │              │
-       │ 1            │ Foreign Key
+       │ 1            │ Foreign Keys
        │              │
        │ Many         │
        ▼              │
@@ -352,43 +373,71 @@
 │              │      │
 │  order_id    │      │
 │  customer_id │──────┘
-│  total       │
+│  total_amount│
 │  status      │
+│  order_date  │
 └──────┬───────┘
        │
-       │ 1
-       │
-       │ Many
-       ▼
-┌──────────────┐
-│ OrderDetails │
-│              │
-│  detail_id   │
-│  order_id    │──────┐
-│  product_id  │──────┼──┐
-│  quantity    │      │  │
-│  subtotal    │      │  │
-└──────────────┘      │  │
-                      │  │
-                      │  │ Foreign Keys
-                      │  │
-       ┌──────────────┘  │
-       │                 │
-       ▼                 ▼
-┌──────────────┐  ┌──────────────┐
-│   Product    │  │   Payment    │
-│              │  │              │
-│  product_id  │  │  payment_id  │
-│  name        │  │  order_id    │
-│  price       │  │  method      │
-│  stock       │  │  amount      │
-└──────────────┘  └──────────────┘
+       │ 1            ┌──────────────┐
+       │              │   Review     │
+       │ Many         │              │
+       ▼              │  review_id   │
+┌──────────────┐      │  customer_id │◄──┐
+│ OrderDetails │      │  product_id  │   │
+│              │      │  rating      │   │
+│  detail_id   │      │  comment     │   │
+│  order_id    │──────┐  review_date  │   │
+│  product_id  │──────┼──┐           │   │
+│  quantity    │      │  │           │   │
+│  subtotal    │      │  │           │   │
+└──────────────┘      │  │           │   │
+                      │  │           │   │
+       ┌──────────────┘  │           │   │
+       │                 │           │   │
+       ▼                 ▼           │   │
+┌──────────────┐  ┌──────────────┐   │   │
+│   Product   │  │   Payment   │   │   │
+│             │  │             │   │   │
+│ product_id  │  │ payment_id  │   │   │
+│ name        │  │ order_id    │───┘   │
+│ category_id │──┐ method      │       │
+│ price       │  │ amount      │       │
+│ stock_qty   │  │ status      │       │
+│ image_url   │  └──────────────┘       │
+└──────────────┘                        │
+       │                                 │
+       │ Many                            │
+       │                                 │
+       ▼                                 │
+┌──────────────┐                        │
+│   Category   │                        │
+│              │                        │
+│ category_id  │                        │
+│ category_name│                        │
+└──────────────┘                        │
+                                        │
+┌──────────────┐                        │
+│RewardTrans   │                        │
+│              │                        │
+│ reward_id    │                        │
+│ customer_id  │────────────────────────┘
+│ points_earned│
+│ points_redeemed│
+│ transaction_date│
+│ description  │
+└──────────────┘
 ```
 
 **Relationship Types:**
-- **One-to-Many**: One Customer → Many Orders
+- **One-to-Many**: 
+  - One Customer → Many Orders
+  - One Customer → Many Reviews
+  - One Customer → Many RewardTransactions
+  - One Order → Many OrderDetails
+  - One Product → Many OrderDetails
+  - One Product → Many Reviews
+  - One Category → Many Products
 - **One-to-One**: One Order → One Payment
-- **Many-to-Many**: (Not used in this project, but Products ↔ Categories could be)
 
 ---
 
@@ -417,10 +466,25 @@ RootLayout (layout.tsx)
 │       │   │   ├── useCart() ← items, removeItem()
 │       │   │   └── router.push('/checkout')
 │       │   │
-│       │   └── CheckoutPage (checkout/page.tsx)
-│       │       ├── useAuth() ← user data
-│       │       ├── useCart() ← items, clearCart()
-│       │       └── ordersAPI.create()
+│       │   ├── CheckoutPage (checkout/page.tsx)
+│       │   │   ├── useAuth() ← user data
+│       │   │   ├── useCart() ← items, clearCart()
+│       │   │   └── ordersAPI.create()
+│       │   │
+│       │   ├── LoginPage (login/page.tsx)
+│       │   │   └── authAPI.login()
+│       │   │
+│       │   ├── SignupPage (signup/page.tsx)
+│       │   │   └── authAPI.register()
+│       │   │
+│       │   ├── ReviewsPage (reviews/page.tsx)
+│       │   │   ├── reviewsAPI.getAll()
+│       │   │   └── reviewsAPI.create()
+│       │   │
+│       │   ├── RewardsPage (rewards/page.tsx)
+│       │   │   └── rewardsAPI.get()
+│       │   │
+│       │   └── ContactPage (contact/page.tsx)
 │       │
 │       └── Footer (Component)
 ```
